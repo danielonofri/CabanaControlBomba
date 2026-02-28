@@ -7,7 +7,7 @@
 const char* ssid = "Ali";
 const char* password = "tanguito2";
 
-ESP8266WebServer server(80);
+ESP8266WebServer server(82);
 
 // CAMBIO: Ahora usamos GPIO2 (que tiene tu R de 10k externa)
 const int relayPin = 2;  
@@ -22,54 +22,93 @@ String connectTime = "";
 void handleRoot() {
   String html = "<!DOCTYPE html><html><head>";
   html += "<meta charset='UTF-8'>";
-  html += "<meta http-equiv='refresh' content='10'>"; // Auto-refresh cada 10s
-  html += "<title>Cabaña Bomba</title>";
+  // ESTA LÍNEA ES LA CLAVE PARA EL CELULAR:
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+  html += "<meta http-equiv='refresh' content='10'>";
+  html += "<title>Cabana Bomba</title>";
   html += "<style>";
-  html += "body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f4f4f9; color: #333; }";
-  html += ".card { background: white; padding: 20px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }";
-  html += ".on { color: #27ae60; font-weight: bold; font-size: 1.5em; }";
-  html += ".off { color: #7f8c8d; font-weight: bold; font-size: 1.5em; }";
-  html += "h2 { border-bottom: 2px solid #3498db; padding-bottom: 5px; }";
+  // Estilos optimizados para dedos y pantallas pequeñas
+  html += "body { font-family: sans-serif; text-align: center; background-color: #f4f4f9; margin: 0; padding: 20px; }";
+  html += ".card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }";
+  html += "h1 { font-size: 24px; color: #2c3e50; }";
+  html += ".status { font-size: 28px; font-weight: bold; margin: 20px 0; padding: 15px; border-radius: 10px; }";
+  html += ".on { background-color: #d4edda; color: #155724; }";
+  html += ".off { background-color: #e2e3e5; color: #383d41; }";
+  html += ".data-box { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; font-size: 16px; line-height: 1.6; }";
   html += "</style></head><body>";
   
-  html += "<div class='card'><h1>Control Bomba Cabaña</h1>";
+  html += "<div class='card'><h1>Monitor Cabana</h1>";
 
-  // LEER ESTADO (Lógica Inversa)
-  int bombaState = digitalRead(relayPin);
-  
-  if (bombaState == LOW) { // El pin está en 0V -> Relé activo
-    html += "Estado actual: <span class='on'>● ENCENDIDA</span><br>";
-  } else {                 // El pin está en 3.3V (vía R 10k) -> Relé inactivo
-    html += "Estado actual: <span class='off'>○ APAGADA</span><br>";
+  int bombaState = digitalRead(relayPin); // GPIO2
+  if (bombaState == LOW) { // Lógica Inversa
+    html += "<div class='status on'>Bomba: ENCENDIDA</div>";
+  } else {
+    html += "<div class='status off'>Bomba: APAGADA</div>";
   }
 
-  html += "<h2>Historial de Ciclo</h2>";
-  html += "<b>Último Encendido:</b> " + lastOn + "<br>";
-  html += "<b>Último Apagado:</b> " + lastOff + "<br>";
-
-  html += "<h2>Sistema</h2>";
-  html += "Conectado desde: " + connectTime + "<br>";
-  html += "Tiempo activo: <span id='uptime' style='font-weight:bold;'></span>";
-  html += "</div>";
-
-  // Script mejorado para Uptime
-  html += "<script>";
-  html += "var startTime = new Date('" + connectTime + "');";
-  html += "function updateUptime(){";
-  html += "  var now = new Date();";
-  html += "  var diff = Math.floor((now - startTime)/1000);";
-  html += "  var days = Math.floor(diff/86400); diff%=86400;";
-  html += "  var hours = Math.floor(diff/3600); diff%=3600;";
-  html += "  var minutes = Math.floor(diff/60); diff%=60;";
-  html += "  var seconds = diff;";
-  html += "  document.getElementById('uptime').innerHTML = days+'d '+hours+'h '+minutes+'m '+seconds+'s';";
-  html += "}";
-  html += "setInterval(updateUptime,1000); updateUptime();";
-  html += "</script>";
-
+  html += "<div class='data-box'>";
+  html += "<b>Últimos Eventos:</b><br>";
+  html += "🟢 On: " + lastOn + "<br>";
+  html += "⚪ Off: " + lastOff + "<br><hr>";
+  html += "⏱️ Uptime: <span id='uptime'></span>";
+  html += "</div></div>";
+  
+  // ... resto del script de uptime ...
   html += "</body></html>";
   server.send(200, "text/html", html);
 }
+
+// void handleRoot() {
+//   String html = "<!DOCTYPE html><html><head>";
+//   html += "<meta charset='UTF-8'>";
+//   html += "<meta http-equiv='refresh' content='10'>"; // Auto-refresh cada 10s
+//   html += "<title>Cabaña Bomba</title>";
+//   html += "<style>";
+//   html += "body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f4f4f9; color: #333; }";
+//   html += ".card { background: white; padding: 20px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }";
+//   html += ".on { color: #27ae60; font-weight: bold; font-size: 1.5em; }";
+//   html += ".off { color: #7f8c8d; font-weight: bold; font-size: 1.5em; }";
+//   html += "h2 { border-bottom: 2px solid #3498db; padding-bottom: 5px; }";
+//   html += "</style></head><body>";
+  
+//   html += "<div class='card'><h1>Control Bomba Cabaña</h1>";
+
+//   // LEER ESTADO (Lógica Inversa)
+//   int bombaState = digitalRead(relayPin);
+  
+//   if (bombaState == LOW) { // El pin está en 0V -> Relé activo
+//     html += "Estado actual: <span class='on'>● ENCENDIDA</span><br>";
+//   } else {                 // El pin está en 3.3V (vía R 10k) -> Relé inactivo
+//     html += "Estado actual: <span class='off'>○ APAGADA</span><br>";
+//   }
+
+//   html += "<h2>Historial de Ciclo</h2>";
+//   html += "<b>Último Encendido:</b> " + lastOn + "<br>";
+//   html += "<b>Último Apagado:</b> " + lastOff + "<br>";
+
+//   html += "<h2>Sistema</h2>";
+//   html += "Conectado desde: " + connectTime + "<br>";
+//   html += "Tiempo activo: <span id='uptime' style='font-weight:bold;'></span>";
+//   html += "</div>";
+
+//   // Script mejorado para Uptime
+//   html += "<script>";
+//   html += "var startTime = new Date('" + connectTime + "');";
+//   html += "function updateUptime(){";
+//   html += "  var now = new Date();";
+//   html += "  var diff = Math.floor((now - startTime)/1000);";
+//   html += "  var days = Math.floor(diff/86400); diff%=86400;";
+//   html += "  var hours = Math.floor(diff/3600); diff%=3600;";
+//   html += "  var minutes = Math.floor(diff/60); diff%=60;";
+//   html += "  var seconds = diff;";
+//   html += "  document.getElementById('uptime').innerHTML = days+'d '+hours+'h '+minutes+'m '+seconds+'s';";
+//   html += "}";
+//   html += "setInterval(updateUptime,1000); updateUptime();";
+//   html += "</script>";
+
+//   html += "</body></html>";
+//   server.send(200, "text/html", html);
+// }
 
 void setup() {
   // GPIO2 como entrada. 
