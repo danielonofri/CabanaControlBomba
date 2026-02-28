@@ -2,9 +2,9 @@ Esta es la documentación técnica definitiva para tu proyecto. Está diseñada 
 
 ---
 
-# 🚀 Proyecto: Monitor de Bomba de Agua (Cabaña)
+# 🚀 Proyecto: Monitor de Bomba de Agua (Cabana)
 
-**Dispositivo:** ESP8266 (ESP-01 o NodeMCU)
+**Dispositivo:** ESP8266 (ESP-01)
 
 **Versión:** 2.0 (Lógica Inversa & Hardware Pull-up)
 
