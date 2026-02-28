@@ -76,7 +76,7 @@ Para subirlo a Git, organiza tu carpeta así:
 
 * **Aislamiento:** Asegúrate de que los contactos del relé que manejan los 220V/110V de la bomba estén totalmente aislados de la parte de baja tensión (ESP8266).
 * **Ruido Eléctrico:** Si notas que el programa marca encendidos falsos muy rápidos, el cable que va al relé podría estar captando interferencia. En ese caso, se puede agregar un pequeño condensador de $100\text{ nF}$ entre GPIO2 y GND.
-* **Red Wi-Fi:** Si cambias el router de la cabaña, deberás actualizar las variables `ssid` y `password` en el código.
+* **Red Wi-Fi:** Si cambias el router de la cabana, deberás actualizar las variables `ssid` y `password` en el código.
 
 ---
 
