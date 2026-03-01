@@ -10,8 +10,8 @@ const char* password = "tanguito2";
 // El puerto 82 que definiste
 ESP8266WebServer server(82);
 
-// CAMBIO VITAL: Usamos el pin RX (GPIO3) para que el ESP arranque siempre
-const int relayPin = 3;  
+// Usamos el pin (GPIO2) El lado del GND
+const int relayPin = 2;  
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", -10800, 60000); // GMT-3
