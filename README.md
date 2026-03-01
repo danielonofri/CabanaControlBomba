@@ -73,6 +73,7 @@ Relé salida (5V activo) ----[10kΩ]----+----> GPIO0 (ESP-01)
 ESP-01 VCC (3.3V) --------------------> CH_PD
 ESP-01 VCC (3.3V) --------------------> ESP-01 VCC
 ESP-01 VCC (3.3V) ----[10kΩ]----------> GPIO2 (pull-up)
+ESP-01 (GND) ---------|100pF|---------> GPIO0
 
 ESP-01 GND ---------------------------> GND común
 Relé VCC (5V) ------------------------> Fuente 5V
