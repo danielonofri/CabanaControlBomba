@@ -7,27 +7,31 @@
 const char* ssid = "Ali";
 const char* password = "tanguito2";
 
+// El puerto 82 que definiste
 ESP8266WebServer server(82);
 
-// CAMBIO: Ahora usamos GPIO2 (que tiene tu R de 10k externa)
-const int relayPin = 2;  
+// CAMBIO VITAL: Usamos el pin RX (GPIO3) para que el ESP arranque siempre
+const int relayPin = 3;  
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", -10800, 60000); // GMT-3
 
 String lastOn = "Esperando dato...";
 String lastOff = "Esperando dato...";
-String connectTime = "";
+String connectTime = "Aún no conectado";
+bool tiempoInicializado = false;
+
+// Variables para Wi-Fi no bloqueante
+unsigned long tiempoAnteriorWiFi = 0;
+const long intervaloWiFi = 10000;
 
 void handleRoot() {
   String html = "<!DOCTYPE html><html><head>";
   html += "<meta charset='UTF-8'>";
-  // ESTA LÍNEA ES LA CLAVE PARA EL CELULAR:
   html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
   html += "<meta http-equiv='refresh' content='10'>";
   html += "<title>Cabana Bomba</title>";
   html += "<style>";
-  // Estilos optimizados para dedos y pantallas pequeñas
   html += "body { font-family: sans-serif; text-align: center; background-color: #f4f4f9; margin: 0; padding: 20px; }";
   html += ".card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }";
   html += "h1 { font-size: 24px; color: #2c3e50; }";
@@ -37,10 +41,10 @@ void handleRoot() {
   html += ".data-box { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; font-size: 16px; line-height: 1.6; }";
   html += "</style></head><body>";
   
-  html += "<div class='card'><h1>Monitor Cabana</h1>";
+  html += "<div class='card'><h1>Monitor Cabaña</h1>";
 
-  int bombaState = digitalRead(relayPin); // GPIO2
-  if (bombaState == LOW) { // Lógica Inversa
+  int bombaState = digitalRead(relayPin); // Lógica Inversa en el pin RX
+  if (bombaState == LOW) { 
     html += "<div class='status on'>Bomba: ENCENDIDA</div>";
   } else {
     html += "<div class='status off'>Bomba: APAGADA</div>";
@@ -53,109 +57,91 @@ void handleRoot() {
   html += "⏱️ Uptime: <span id='uptime'></span>";
   html += "</div></div>";
   
-  // ... resto del script de uptime ...
+  // Acá está el script de Uptime rescatado para que funcione en pantalla
+  html += "<script>";
+  html += "var startTime = new Date('" + connectTime + "');";
+  html += "function updateUptime(){";
+  html += "  var now = new Date();";
+  html += "  if(isNaN(startTime)) { document.getElementById('uptime').innerHTML = 'Esperando red...'; return; }";
+  html += "  var diff = Math.floor((now - startTime)/1000);";
+  html += "  var days = Math.floor(diff/86400); diff%=86400;";
+  html += "  var hours = Math.floor(diff/3600); diff%=3600;";
+  html += "  var minutes = Math.floor(diff/60); diff%=60;";
+  html += "  var seconds = diff;";
+  html += "  document.getElementById('uptime').innerHTML = days+'d '+hours+'h '+minutes+'m '+seconds+'s';";
+  html += "}";
+  html += "setInterval(updateUptime,1000); updateUptime();";
+  html += "</script>";
+
   html += "</body></html>";
   server.send(200, "text/html", html);
 }
 
-// void handleRoot() {
-//   String html = "<!DOCTYPE html><html><head>";
-//   html += "<meta charset='UTF-8'>";
-//   html += "<meta http-equiv='refresh' content='10'>"; // Auto-refresh cada 10s
-//   html += "<title>Cabaña Bomba</title>";
-//   html += "<style>";
-//   html += "body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f4f4f9; color: #333; }";
-//   html += ".card { background: white; padding: 20px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }";
-//   html += ".on { color: #27ae60; font-weight: bold; font-size: 1.5em; }";
-//   html += ".off { color: #7f8c8d; font-weight: bold; font-size: 1.5em; }";
-//   html += "h2 { border-bottom: 2px solid #3498db; padding-bottom: 5px; }";
-//   html += "</style></head><body>";
-  
-//   html += "<div class='card'><h1>Control Bomba Cabaña</h1>";
-
-//   // LEER ESTADO (Lógica Inversa)
-//   int bombaState = digitalRead(relayPin);
-  
-//   if (bombaState == LOW) { // El pin está en 0V -> Relé activo
-//     html += "Estado actual: <span class='on'>● ENCENDIDA</span><br>";
-//   } else {                 // El pin está en 3.3V (vía R 10k) -> Relé inactivo
-//     html += "Estado actual: <span class='off'>○ APAGADA</span><br>";
-//   }
-
-//   html += "<h2>Historial de Ciclo</h2>";
-//   html += "<b>Último Encendido:</b> " + lastOn + "<br>";
-//   html += "<b>Último Apagado:</b> " + lastOff + "<br>";
-
-//   html += "<h2>Sistema</h2>";
-//   html += "Conectado desde: " + connectTime + "<br>";
-//   html += "Tiempo activo: <span id='uptime' style='font-weight:bold;'></span>";
-//   html += "</div>";
-
-//   // Script mejorado para Uptime
-//   html += "<script>";
-//   html += "var startTime = new Date('" + connectTime + "');";
-//   html += "function updateUptime(){";
-//   html += "  var now = new Date();";
-//   html += "  var diff = Math.floor((now - startTime)/1000);";
-//   html += "  var days = Math.floor(diff/86400); diff%=86400;";
-//   html += "  var hours = Math.floor(diff/3600); diff%=3600;";
-//   html += "  var minutes = Math.floor(diff/60); diff%=60;";
-//   html += "  var seconds = diff;";
-//   html += "  document.getElementById('uptime').innerHTML = days+'d '+hours+'h '+minutes+'m '+seconds+'s';";
-//   html += "}";
-//   html += "setInterval(updateUptime,1000); updateUptime();";
-//   html += "</script>";
-
-//   html += "</body></html>";
-//   server.send(200, "text/html", html);
-// }
-
 void setup() {
-  // GPIO2 como entrada. 
-  // Nota: Al arrancar, el ESP8266 necesita GPIO2 en HIGH. Tu R de 10k lo garantiza.
+  // Desconectamos la "oreja" del RX para evitar cuelgues, pero nos sigue hablando por Serial
+  Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
+  
   pinMode(relayPin, INPUT);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-  }
+  
+  // Chau al while(WiFi.status() != WL_CONNECTED). Ahora no se bloquea.
 
   timeClient.begin();
-  timeClient.update();
-
-  // Guardar hora de conexión inicial
-  time_t rawTime = timeClient.getEpochTime();
-  struct tm* timeInfo = localtime(&rawTime);
-  char buffer[25];
-  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", timeInfo);
-  connectTime = String(buffer);
-
   server.on("/", handleRoot);
   server.begin();
+  
+  Serial.println("\nSistema Iniciado.");
 }
 
 void loop() {
-  server.handleClient();
-  timeClient.update();
+  // --- 1. GESTIÓN WI-FI (SEGUNDO PLANO) ---
+  if (WiFi.status() == WL_CONNECTED) {
+    server.handleClient();
+    timeClient.update();
+    
+    // Solo toma la hora de conexión la primera vez que se engancha a la red
+    if (!tiempoInicializado && timeClient.isTimeSet()) {
+      time_t rawTime = timeClient.getEpochTime();
+      struct tm* timeInfo = localtime(&rawTime);
+      char buffer[25];
+      strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", timeInfo);
+      connectTime = String(buffer);
+      tiempoInicializado = true;
+    }
+  } else {
+    // Si se corta el Wi-Fi, intenta reconectar sin frenar el programa
+    unsigned long tiempoActual = millis();
+    if (tiempoActual - tiempoAnteriorWiFi >= intervaloWiFi) {
+      WiFi.begin(ssid, password);
+      tiempoAnteriorWiFi = tiempoActual;
+    }
+  }
 
-  // Lógica para detectar el cambio de estado y guardar la hora
+  // --- 2. LECTURA DE LA BOMBA (Funciona SIEMPRE, con o sin red) ---
   int currentRelayState = digitalRead(relayPin);
   static int lastRelayState = -1;
 
   if (currentRelayState != lastRelayState) {
-    time_t rawTime = timeClient.getEpochTime();
-    struct tm* timeInfo = localtime(&rawTime);
-    char buffer[20];
-    strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M:%S", timeInfo);
+    String horaEvento = "Guardado sin red"; // Mensaje por defecto si falla el Wi-Fi
+    
+    // Solo pide la hora real si hay internet
+    if (WiFi.status() == WL_CONNECTED && timeClient.isTimeSet()) {
+      time_t rawTime = timeClient.getEpochTime();
+      struct tm* timeInfo = localtime(&rawTime);
+      char buffer[20];
+      strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M:%S", timeInfo);
+      horaEvento = String(buffer);
+    }
 
-    if (currentRelayState == LOW) { // Cambió a Encendido
-      lastOn = String(buffer);
-    } else if (lastRelayState != -1) { // Cambió a Apagado (evitamos el primer arranque)
-      lastOff = String(buffer);
+    if (currentRelayState == LOW) { 
+      lastOn = horaEvento; // Cambió a Encendido
+    } else if (lastRelayState != -1) { 
+      lastOff = horaEvento; // Cambió a Apagado
     }
     lastRelayState = currentRelayState;
   }
+  
   delay(100); // Pequeña pausa para estabilidad
 }

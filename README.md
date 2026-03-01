@@ -35,11 +35,37 @@ El sensor aprovecha el cierre del circuito hacia el negativo (GND) que realiza e
 
 ## 🔌 Esquema de Conexiones (Pinout)
 
-| Componente | Pin ESP8266 | Conexión Destino | Nota |
-| --- | --- | --- | --- |
-| **Resistencia 10k** | GPIO2 | **VCC (3.3V)** | Pull-up (Estabilidad y Arranque) |
-| **Cable Sensor** | GPIO2 | **Negativo del Relé** | Detecta el paso a GND |
-| **Alimentación** | VCC / GND | Fuente 3.3V | **¡No usar 5V directamente!** |
+
+- **ESP‑01 VCC (pin 8)** → Fuente regulada de **3.3 V** estable.  
+- **ESP‑01 GND (pin 1)** → Común con el GND del relé y del divisor.  
+- **ESP‑01 GPIO0 (pin 3)** → Punto medio del divisor resistivo.  
+  - **R1 = 10 kΩ** entre la salida de 5 V del relé (IN o señal de estado) y GPIO0.  
+  - **R2 = 20 kΩ** entre GPIO0 y GND.  
+  - Esto baja los 5 V a ~3.3 V seguros para el ESP‑01.  
+- **ESP‑01 GPIO2 (pin 4)** → Libre (antes iba al LED verde, ahora no se usa).  
+- **Relé VCC (5 V)** → Fuente de 5 V independiente.  
+- **Relé GND** → Común con GND del ESP‑01.  
+
+---
+
+## Esquema simplificado
+
+```
+Relé salida (5V activo) ----[10kΩ]----+----> GPIO0 (ESP-01)
+                                      |
+                                     [20kΩ]
+                                      |
+                                     GND
+
+ESP-01 VCC (3.3V) --------------------> Fuente 3.3V
+ESP-01 GND ---------------------------> GND común
+Relé VCC (5V) ------------------------> Fuente 5V
+Relé GND -----------------------------> GND común
+```
+
+---
+
+👉 Con esto, el ESP‑01 detecta directamente el estado de la bomba a través de **GPIO0**. El LED ya no está, así que el firmware solo registra y envía las fechas de encendido/apagado.
 
 ---
 
