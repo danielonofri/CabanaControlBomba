@@ -35,16 +35,24 @@ El sensor aprovecha el cierre del circuito hacia el negativo (GND) que realiza e
 
 ## 🔌 Esquema de Conexiones (Pinout)
 
-
-- **ESP‑01 VCC (pin 8)** → Fuente regulada de **3.3 V** estable.  
-- **ESP‑01 GND (pin 1)** → Común con el GND del relé y del divisor.  
-- **ESP‑01 GPIO0 (pin 3)** → Punto medio del divisor resistivo.  
-  - **R1 = 10 kΩ** entre la salida de 5 V del relé (IN o señal de estado) y GPIO0.  
-  - **R2 = 20 kΩ** entre GPIO0 y GND.  
-  - Esto baja los 5 V a ~3.3 V seguros para el ESP‑01.  
-- **ESP‑01 GPIO2 (pin 4)** → Libre (antes iba al LED verde, ahora no se usa).  
-- **Relé VCC (5 V)** → Fuente de 5 V independiente.  
-- **Relé GND** → Común con GND del ESP‑01.  
+• 	ESP‑01 VCC (pin 8)
+→ Fuente regulada de 3.3 V estable.
+→ También conectado a CH_PD (pin 7) para mantener el chip habilitado.
+• 	ESP‑01 GND (pin 1)
+→ Común con el GND del relé y del divisor resistivo.
+• 	ESP‑01 GPIO0 (pin 3)
+→ Punto medio del divisor resistivo:
+• 	R1 = 10 kΩ entre salida de 5 V del relé (estado de bomba) y GPIO0.
+• 	R2 = 20 kΩ entre GPIO0 y GND.
+→ Esto baja los 5 V a ~3.3 V seguros para el ESP‑01.
+• 	ESP‑01 GPIO2 (pin 4)
+→ Tirado hacia VCC mediante una resistencia de 10 kΩ (pull‑up).
+→ Esto asegura que el ESP‑01 arranque correctamente, ya que GPIO2 debe estar en alto durante el boot.
+→ En este proyecto no se usa para LED ni relé, queda libre pero con el pull‑up.
+• 	Relé VCC (5 V)
+→ Fuente de 5 V independiente.
+• 	Relé GND
+→ Común con el GND del ESP‑01.
 
 ---
 
@@ -57,10 +65,14 @@ Relé salida (5V activo) ----[10kΩ]----+----> GPIO0 (ESP-01)
                                       |
                                      GND
 
-ESP-01 VCC (3.3V) --------------------> Fuente 3.3V
+ESP-01 VCC (3.3V) --------------------> CH_PD
+ESP-01 VCC (3.3V) --------------------> ESP-01 VCC
+ESP-01 VCC (3.3V) ----[10kΩ]----------> GPIO2 (pull-up)
+
 ESP-01 GND ---------------------------> GND común
 Relé VCC (5V) ------------------------> Fuente 5V
 Relé GND -----------------------------> GND común
+
 ```
 
 ---
